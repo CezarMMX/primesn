@@ -1,10 +1,13 @@
 """Testes funcionais dos executáveis C e Fortran (somente biblioteca padrão)."""
 from pathlib import Path
+import os
 import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-BINARIOS = [ROOT / 'bin/linux-x86_64' / nome
+PASTA_BINARIOS = ROOT / ('bins_1.0a' if os.name == 'nt' else 'bin/linux-x86_64')
+SUFIXO = '.exe' if os.name == 'nt' else ''
+BINARIOS = [PASTA_BINARIOS / (nome + SUFIXO)
             for nome in ('primos-c', 'primos-fortran')]
 PRIMOS = [True] * 10000
 PRIMOS[:2] = [False, False]
@@ -16,7 +19,7 @@ for divisor in range(2, 100):
 
 class TestPrimos(unittest.TestCase):
     def executar(self, binario, entrada):
-        return subprocess.run([str(binario)], input=entrada, text=True,
+        return subprocess.run([str(binario)], input=entrada, text=True, encoding='utf-8',
                               capture_output=True, timeout=5)
 
     def conferir_intervalo(self, binario, entrada, inicio, fim, erros=0):

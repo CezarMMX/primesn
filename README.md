@@ -16,10 +16,14 @@ com código de erro.
 - `src/primos.f90`: fonte Fortran; requer suporte ao padrão Fortran 2018.
 - `bin/linux-x86_64/primos-c`: executável C para Linux x86-64.
 - `bin/linux-x86_64/primos-fortran`: executável Fortran para Linux x86-64.
+- `bins_1.0a/primos-c.exe`: executável C para Windows x86 (32 bits).
+- `bins_1.0a/primos-fortran.exe`: executável Fortran para Windows x86 (32 bits).
 - `tests/test_primos.py`: testes funcionais dos dois executáveis.
 
-Os binários incluídos são ELF estáticos para Linux x86-64. Para Windows,
-macOS ou outra arquitetura, recompile os fontes com compiladores adequados.
+Os executáveis Linux são ELF estáticos para x86-64. Os executáveis Windows
+são PE32 para x86, com os runtimes dos compiladores vinculados estaticamente.
+Continuam usando as DLLs do próprio Windows. Para macOS ou outra arquitetura,
+recompile os fontes com compiladores adequados.
 
 ## Executar os binários incluídos
 
@@ -37,6 +41,55 @@ Verifique a integridade dos executáveis com:
 ```sh
 sha256sum -c SHA256SUMS
 ```
+
+## Executar no Windows
+
+No PowerShell, na raiz do repositório:
+
+```powershell
+chcp 65001
+.\bins_1.0a\primos-c.exe
+.\bins_1.0a\primos-fortran.exe
+```
+
+`chcp 65001` seleciona UTF-8 para exibir os acentos no terminal. Execute pelo
+terminal para manter o resultado visível após o programa terminar.
+Os executáveis x86 são destinados a Windows de 32 bits e também podem ser
+usados em Windows x64 com suporte a aplicativos x86.
+
+## Compilar para Windows x86 a partir do Linux
+
+Não é necessário alterar os fontes C ou Fortran. A arquitetura e o formato
+do executável são selecionados pelo compilador MinGW-w64 usado na compilação.
+O alvo `windows` do Makefile usa a variante Win32 dos compiladores de 32 bits.
+
+Em Debian 13, instale `make`, `gcc-mingw-w64-i686-win32` e
+`gfortran-mingw-w64-i686-win32`. Depois execute:
+
+```sh
+make windows
+make checksums-windows
+sha256sum -c SHA256SUMS.windows
+```
+
+Para outra instalação que use os nomes genéricos dos compiladores cruzados:
+
+```sh
+make windows WINCC=i686-w64-mingw32-gcc WINFC=i686-w64-mingw32-gfortran
+```
+
+No próprio Windows, também é possível compilar com GCC e GNU Fortran de uma
+instalação MinGW-w64 para **32 bits** (verifique o alvo com `gcc -dumpmachine`):
+
+```sh
+gcc -std=c17 -O2 -Wall -Wextra -pedantic -static -s src/primos.c -o bins_1.0a/primos-c.exe
+gfortran -std=f2018 -O2 -Wall -Wextra -static -s src/primos.f90 -o bins_1.0a/primos-fortran.exe
+```
+
+Os binários Windows foram gerados com GCC/GNU Fortran 14.2.0 via MinGW-w64.
+O formato PE32, a arquitetura i386, as dependências importadas e os checksums
+foram verificados no Linux. A execução desses `.exe` em Windows ainda precisa
+ser validada; a compilação cruzada não executa os programas.
 
 ## Compilar no Linux x86-64
 
@@ -70,6 +123,10 @@ Requisito adicional: Python 3, sem dependências externas.
 ```sh
 python3 tests/test_primos.py
 ```
+
+No Windows com Python instalado, execute `py tests/test_primos.py`.
+O teste escolhe automaticamente os binários da plataforma e usa UTF-8 para
+ler as mensagens dos processos.
 
 São 27 cenários por executável (54 ao todo), agrupados em três testes:
 intervalos, rejeição de entradas inválidas e fim de entrada. Incluem a
